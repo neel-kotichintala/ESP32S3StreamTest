@@ -3,5 +3,6 @@
     "idf.openOcdConfigs": [
         "board/esp32s3-builtin.cfg"
     ],
-    "idf.port": "/dev/tty.wchusbserial58FC0021191"
+    "idf.port": "/dev/tty.wchusbserial58FC0021191",
+    "idf.flashType": "UART"
 }
