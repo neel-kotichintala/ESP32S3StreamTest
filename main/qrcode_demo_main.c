@@ -443,8 +443,8 @@ static esp_err_t init_camera_for_streaming(void)
         .ledc_channel = LEDC_CHANNEL_0,
         .ledc_timer = LEDC_TIMER_0,
         .pixel_format = PIXFORMAT_JPEG,       // JPEG for streaming
-        .frame_size = FRAMESIZE_SVGA,          // SVGA (800 x 600) for faster transmission
-        .jpeg_quality = 13,                   // Lower quality for faster transmission
+        .frame_size = FRAMESIZE_XGA,          // SVGA (800 x 600) for faster transmission
+        .jpeg_quality = 24,                   // Lower quality for faster transmission
         .fb_count = 2,                        // Double buffer for smooth streaming
         .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
     };
@@ -940,7 +940,7 @@ static void streaming_task(void *arg)
     }
     
     // Wait a moment for registration to complete
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(200));
     
     // Setup WebSocket connection
     char ws_path[128];
@@ -1017,7 +1017,7 @@ static void streaming_task(void *arg)
                 websocket_fd = -1;
             }
             
-            vTaskDelay(pdMS_TO_TICKS(2000)); // Wait before reconnecting
+            vTaskDelay(pdMS_TO_TICKS(5)); // Wait before reconnecting
             
             if (websocket_connect(SERVER_IP, SERVER_PORT, ws_path) == ESP_OK) {
                 ESP_LOGI(TAG, "WebSocket reconnected successfully");
@@ -1214,14 +1214,14 @@ static void processing_task(void *arg)
                             ESP_LOGI(TAG, "QR code scanning completed, transitioning to streaming...");
                             
                             // Wait for main task to stop cleanly
-                            vTaskDelay(pdMS_TO_TICKS(500));
+                            vTaskDelay(pdMS_TO_TICKS(150));
                             
                             // Stop camera
                             esp_camera_deinit();
                             ESP_LOGI(TAG, "Camera deinitialized");
                             
                             // Wait a moment before reinitializing
-                            vTaskDelay(pdMS_TO_TICKS(1000));
+                            vTaskDelay(pdMS_TO_TICKS(150));
                             
                             // Initialize camera for streaming
                             esp_err_t stream_cam_err = init_camera_for_streaming();
