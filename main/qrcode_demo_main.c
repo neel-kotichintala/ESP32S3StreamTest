@@ -13,6 +13,7 @@
 #include "esp_heap_caps.h"
 #include "driver/spi_master.h"
 #include "driver/sdmmc_host.h"
+#include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
@@ -63,7 +64,7 @@ static uint32_t jpeg_validation_failures = 0;
 
 // Camera configuration for Freenove WROOM board
 // Updated with the specific pin configuration provided
-/* #define CAM_PIN_PWDN    -1 //power down is not used
+#define CAM_PIN_PWDN    -1 //power down is not used
 #define CAM_PIN_RESET   -1 //software reset will be performed
 #define CAM_PIN_XCLK    15
 #define CAM_PIN_SIOD    4
@@ -79,9 +80,9 @@ static uint32_t jpeg_validation_failures = 0;
 #define CAM_PIN_VSYNC   6
 #define CAM_PIN_HREF    7
 #define CAM_PIN_PCLK    13
-*/
+#define LED_BUILTIN      2
 
-#define CAM_PIN_PWDN  -1 // Power Down pin. Not used on this board.
+/*#define CAM_PIN_PWDN  -1 // Power Down pin. Not used on this board.
 #define CAM_PIN_RESET -1 // Reset pin. Not used on this board.
 #define CAM_PIN_XCLK  15 // Clock pin
 #define CAM_PIN_SIOD   4 // I2C SDA pin for camera
@@ -97,7 +98,7 @@ static uint32_t jpeg_validation_failures = 0;
 #define CAM_PIN_VSYNC  6 // Vertical Sync
 #define CAM_PIN_HREF   7 // Horizontal Reference
 #define CAM_PIN_PCLK  13 // Pixel Clock
-
+*/
 
 /* #define CAM_PIN_PWDN  -1
 #define CAM_PIN_RESET   -1
@@ -1051,7 +1052,7 @@ static void streaming_task(void *arg)
         }
         
         // Control frame rate (approximately 10 FPS)
-        vTaskDelay(pdMS_TO_TICKS(30));
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
     
     // Cleanup and final diagnostics
@@ -1066,6 +1067,14 @@ static void streaming_task(void *arg)
     
     ESP_LOGI(TAG, "Streaming task ended with comprehensive diagnostics");
     vTaskDelete(NULL);
+}
+
+static void flashOnceParsed() {
+    gpio_set_direction(LED_BUILTIN, GPIO_MODE_OUTPUT); // Set LED pin as output
+    gpio_set_level(LED_BUILTIN, 0); // Turn LED on (assuming active low)
+    vTaskDelay(20 / portTICK_PERIOD_MS); // Delay for 1 second
+    gpio_set_level(LED_BUILTIN, 1); // Turn LED off
+    vTaskDelay(20 / portTICK_PERIOD_MS); // Delay for 1 second
 }
 
 // Main task: initializes the camera and starts the processing task
@@ -1180,6 +1189,7 @@ static void processing_task(void *arg)
                 char password[64] = {0};
                 
                 if (parse_wifi_qr_code((const char*)qr_data.payload, ssid, password)) {
+                    flashOnceParsed();
                     ESP_LOGI(TAG, "WiFi QR code detected! Attempting to connect...");
                     
                     // Connect to WiFi
